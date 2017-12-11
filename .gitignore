@@ -1,5 +1,9 @@
-.vscode
+sdc10.sublime-workspace
+sdc10.sublime-project
+
+reviewer
+submission_instructions.*
 build
-tags
-.editorconfig
-.DS_Store
+solution
+solution_data
+Ipopt-3.12.7
