@@ -129,6 +129,9 @@ int main()
                     //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
                     // the points in the simulator are connected by a Green line
 
+                    mpc_x_vals.push_back(5.0);
+                    mpc_y_vals.push_back(0.0);
+
                     msgJson["mpc_x"] = mpc_x_vals;
                     msgJson["mpc_y"] = mpc_y_vals;
 
