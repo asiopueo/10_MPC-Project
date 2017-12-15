@@ -45,13 +45,7 @@ class FG_eval {
         // `fg` a vector of the cost constraints, `vars` is a vector of variable values (state & actuators)
         // NOTE: You'll probably go back and forth between this function and
         // the Solver function below.
-        
-        //
-        // From where do we get values like x_start, psi_start, etc. ?
-        //
-
-
-
+    
 
         // ********************************
         // Initialize the cost constraints:
@@ -67,14 +61,14 @@ class FG_eval {
         }
 
         // Minimize actuator use
-        for (int t=0; t<N; ++t)
+        for (int t=0; t<N-1; ++t)
         {
             fg[0] += CppAD::pow(vars[delta_start+t], 2);
             fg[0] += CppAD::pow(vars[a_start+t], 2);
         }
 
         // Minimize value gap for the actuators
-        for (int t=0; t<N; ++t)
+        for (int t=0; t<N-2; ++t)
         {
             fg[0] += CppAD::pow(vars[delta_start+t+1] - vars[delta_start+t], 2);
             fg[0] += CppAD::pow(vars[a_start+t+1] - vars[a_start+1], 2);
@@ -153,8 +147,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     //
     // 4 * 10 + 2 * 9
 
-    size_t n_vars = 4*N + 2*(N-1);
-    size_t n_constraints = (4+2)*N;
+    size_t n_vars = 6*N + 2*(N-1);
+    size_t n_constraints = N*7;
 
 
 
@@ -227,9 +221,8 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
 
     // solve the problem
     CppAD::ipopt::solve<Dvector, FG_eval>(
-      options, vars, vars_lowerbound, vars_upperbound, constraints_lowerbound,
-      constraints_upperbound, fg_eval, solution);
-
+        options, vars, vars_lowerbound, vars_upperbound, constraints_lowerbound, constraints_upperbound, fg_eval, solution);
+    
     // Check some of the solution values
     ok &= solution.status == CppAD::ipopt::solve_result<Dvector>::success;
 
@@ -237,11 +230,15 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     auto cost = solution.obj_value;
     std::cout << "Cost " << cost << std::endl;
 
+
     // TODO: Return the first actuator values. The variables can be accessed with
     // `solution.x[i]`.
     //
     // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
     // creates a 2 element double vector.
+    
+    //std::cout << "delta: " << solution.x[delta_start] << std::endl;
+    //std::cout << "a: " << solution.x[a_start] << std::endl;
 
     return {};
 }

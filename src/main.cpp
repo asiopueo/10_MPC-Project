@@ -188,7 +188,7 @@ int main()
                     // Calculation of predictive trajectory:
                     Eigen::VectorXd state = Eigen::VectorXd(6);
                     state << px, py, v, psi, cte, epsi;
-                    //std::vector<double> solution = mpc.Solve(state, coeffs);
+                    mpc.Solve(state, coeffs);
 
 
                     //steer_value = solution;
