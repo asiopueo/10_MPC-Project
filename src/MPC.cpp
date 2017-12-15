@@ -6,8 +6,8 @@
 using CppAD::AD;
 
 // TODO: Set the timestep length and duration
-size_t N = 0;
-double dt = 0;
+size_t N = 20;
+double dt = 0.1;
 
 // This value assumes the model presented in the classroom is used.
 //
@@ -80,7 +80,7 @@ class FG_eval {
         // Initialization & Constraints
         // ********************************
 
-        // Initialization
+        // INITIALIZATION
         fg[x_start+1] = vars[x_start];
         fg[y_start+1] = vars[y_start];
         fg[psi_start+1] = vars[psi_start];
@@ -90,81 +90,38 @@ class FG_eval {
 
 
         // CONSTRAINTS
-        // x
-        for (int t=0; t<N; ++t)
-        {
-            AD<double> x1 = vars[x_start+t];
-            AD<double> x0 = vars[x_start+t-1];
-            AD<double> v0 = vars[v_start+t-1];
-            AD<double> psi0 = vars[psi_start+t-1];
-
-            fg[x_start+t+1] = x1 - (x0 + v0 * cos(psi0)*dt);
-        }
-
-        // y
-        for (int t=0; t<N; ++t)
-        {
-            AD<double> y1 = vars[y_start+t];
-            AD<double> y0 = vars[y_start+t-1];
-            AD<double> v0 = vars[v_start+t-1];
-            AD<double> psi0 = vars[psi_start+t-1];
-
-            fg[y_start+t+1] = y1 - (y0 + v0 * sin(psi0)*dt);
-        }
-
-        // Psi
-        for (int t=0; t<N; ++t)
+        // Notice that the loop starts with t=1.  (cf. initialization above)
+        for (int t=1; t<N; ++t)
         {
             // Time t+1
-            AD<double> psi1 = vars[psi_start + 1];
-
-            // Time t
-            AD<double> psi0 = vars[psi_start + t - 1];
-            AD<double> x0 = vars[x_start + t - 1];
-            AD<double> v0 = vars[v_start + t - 1];
-            AD<double> delta0 = vars[delta_start + t - 1];
-
-            // Definition of the constraints
-            fg[psi_start + t + 1] = psi1 - x0 + (psi0 + v0 * delta0/Lf *dt);
-        }
-
-        // v
-        for (int t=0; t<N; ++t)
-        {
+            AD<double> x1 = vars[x_start+t];
+            AD<double> y1 = vars[y_start+t];
             AD<double> v1 = vars[v_start+t];
+            AD<double> psi1 = vars[psi_start+t];
+            AD<double> cte1 = vars[cte_start+t];
+            AD<double> epsi1 = vars[epsi_start+t];
+            
+            // Time t
+            AD<double> x0 = vars[x_start+t-1];
+            AD<double> y0 = vars[y_start+t-1];
             AD<double> v0 = vars[v_start+t-1];
+            AD<double> psi0 = vars[psi_start+t-1];
+            AD<double> cte0 = vars[cte_start+t-1];            
+            AD<double> epsi0 = vars[epsi_start+t-1];
+            AD<double> delta0 = vars[delta_start+t-1];
             AD<double> a0 = vars[a_start+t-1];
 
+
+
+            fg[x_start+t+1] = x1 - (x0 + v0 * cos(psi0)*dt);
+            fg[y_start+t+1] = y1 - (y0 + v0 * sin(psi0)*dt);
             fg[v_start+t+1] = v1 - (v0 + a0*dt);
-        }
-
-        // cte
-        for (int t=0; t<N; ++t)
-        {
-            AD<double> cte1 = vars[cte_start+t];
-            AD<double> cte0 = vars[cte_start+t-1];
-            AD<double> x0 = vars[x_start+t-1];
-            AD<double> y0 = vars[y_start+t-1];
-            AD<double> v0 = vars[v_start+t-1];
-            AD<double> epsi0 = vars[epsi_start+t-1];
-
+            fg[psi_start + t + 1] = psi1 - x0 + (psi0 + v0 * delta0/Lf *dt);
+            
             AD<double> f0 = coeffs[0] + coeffs[1] * x0;
-
             fg[cte_start+t+1] = cte1 - (f0 - y0 + (v0 * sin(epsi0)*dt) );
-        }
-
-        // epsi
-        for (int t=0; t<N; ++t)
-        {
-            AD<double> epsi1 = vars[epsi_start+t];
-            AD<double> psi0 = vars[psi_start+t-1];
-            AD<double> delta0 = vars[delta_start+t-1];
-            AD<double> x0 = vars[x_start+t-1];
-            AD<double> y0 = vars[y_start+t-1];
-            AD<double> v0 = vars[v_start+t-1];
 
             AD<double> psides0 = CppAD::atan(coeffs[1]);
-
             fg[epsi_start+t+1] = epsi1 - (psi0 - psides0 + (v0 * delta0/Lf *dt));
         }
 
@@ -190,9 +147,11 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     // element vector and there are 10 timesteps. The number of variables is:
     //
     // 4 * 10 + 2 * 9
-    size_t n_vars = 6;
+
+    size_t n_vars = 4*N+2*(N-1);
+
     // TODO: Set the number of constraints
-    size_t n_constraints = 0;
+    size_t n_constraints = (4+2)*N;
 
     // Initial value of the independent variables.
     // SHOULD BE 0 besides initial state.

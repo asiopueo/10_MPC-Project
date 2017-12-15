@@ -74,6 +74,20 @@ Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals, int order)
     return result;
 }
 
+//
+//
+//
+
+
+
+
+
+
+
+
+
+
+
 int main() 
 {
     uWS::Hub h;
@@ -113,12 +127,67 @@ int main()
                     * Both are in between [-1, 1].
                     *
                     */
+
+                    //std::cout << "ptsx: " << ptsx[0] << std::endl;
+                    //std::cout << "ptsy: " << ptsy[0] << std::endl;
+                    
                     double steer_value;
                     double throttle_value;
+                    //Eigen::VectorXd coeffs = Eigen::VectorXd(4);
 
+                    // Waypoints BEGIN
+                    // Transformation World->Car
+                    Eigen::MatrixXd rotation(2, 2);
+                    rotation << cos(psi), sin(psi),
+                                -sin(psi), cos(psi);
+                    Eigen::VectorXd translation(2);
+                    translation << -px, -py;
+                    Eigen::VectorXd input(2);
+                    Eigen::VectorXd output(2);
+
+                    for (int i=0; i< ptsx.size(); ++i)
+                    {
+                        input << ptsx[i], ptsy[i];
+                        output = rotation * (translation + input);
+                        //std::cout << output(0) << "\t" << output(1) << std::endl;
+                        ptsx[i] = output(0);
+                        ptsy[i] = output(1);
+                    }
+
+                    std::vector<double> next_x_vals(6);
+                    std::vector<double> next_y_vals(6);
+
+                    next_x_vals = ptsx;
+                    next_y_vals = ptsy;
+                    //std::cout << next_x_vals[0] << "\t" << next_y_vals[0] << std::endl;
+                    // Waypoints END
+
+                    Eigen::VectorXd coeffs = Eigen::VectorXd(4);
+                    //Eigen::VectorXd next_x_vals_Vector = Eigen::VectorXd(6);
+                    //Eigen::VectorXd next_x_vals_Vector = Eigen::VectorXd(6);
+                    Eigen::Map<Eigen::VectorXd> next_x_vals_Vector(&ptsx[0], 6);
+                    Eigen::Map<Eigen::VectorXd> next_y_vals_Vector(&ptsy[0], 6);
+
+                    coeffs = polyfit(next_x_vals_Vector, next_y_vals_Vector, 3); // Fit values to pologon of order 3                    
+
+                    /*for (int i=0; i<4;i++)
+                        std::cout << coeffs[i] << "\t";
+                    std::cout << std::endl;
+                    */
+
+                    
+                    /*
+                    xvals = ;
+                    yvals = ;
+
+                    // Using the nearest points in the Car's coordinate system
+                    double cte = polyeval(coeffs, x) - y;
+                    double epsi = psi - atan(coeffs[1]);
+
+                    //mpc();
                     //steer_value = ;
                     //throttle_value = ;
-
+                    */
 
 
                     json msgJson;
@@ -128,22 +197,21 @@ int main()
                     msgJson["throttle"] = throttle_value;
 
                     //Display the MPC predicted trajectory 
-                    vector<double> mpc_x_vals;
-                    vector<double> mpc_y_vals;
-
                     //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
                     // the points in the simulator are connected by a Green line
 
+                    vector<double> mpc_x_vals;
+                    vector<double> mpc_y_vals;
+
                     mpc_x_vals.push_back(5.0);
+                    mpc_y_vals.push_back(0.0);
+                    mpc_x_vals.push_back(15.0);
                     mpc_y_vals.push_back(0.0);
 
                     msgJson["mpc_x"] = mpc_x_vals;
                     msgJson["mpc_y"] = mpc_y_vals;
 
                     //Display the waypoints/reference line
-                    vector<double> next_x_vals;
-                    vector<double> next_y_vals;
-
                     //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
                     // the points in the simulator are connected by a Yellow line
 
@@ -152,7 +220,12 @@ int main()
 
 
                     auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-                    std::cout << msg << std::endl;
+                    
+
+                    // View JSON-payload
+                    //std::cout << msg << std::endl;
+                    
+
                     // Latency
                     // The purpose is to mimic real driving conditions where
                     // the car does actuate the commands instantly.
