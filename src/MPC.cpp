@@ -9,6 +9,17 @@ using CppAD::AD;
 size_t N = 20;
 double dt = 0.1;
 
+
+const int x_start = 0;
+const int y_start = N;
+const int v_start = 2*N;
+const int psi_start = 3*N;
+const int cte_start = 4*N;
+const int epsi_start = 5*N;
+const int delta_start = 6*N;
+const int a_start = 6*N + (N-1);
+
+
 // This value assumes the model presented in the classroom is used.
 //
 // It was obtained by measuring the radius formed by running the vehicle in the
@@ -38,14 +49,8 @@ class FG_eval {
         //
         // From where do we get values like x_start, psi_start, etc. ?
         //
-        const int x_start = 0;
-        const int y_start = N;
-        const int psi_start = 2*N;
-        const int v_start = 3*N;
-        const int delta_start = 4*N;
-        const int a_start = 5*N;
-        const int cte_start = 4*N;
-        const int epsi_start = 4*N + (N-1);
+
+
 
 
         // ********************************
@@ -148,10 +153,12 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     //
     // 4 * 10 + 2 * 9
 
-    size_t n_vars = 4*N+2*(N-1);
-
-    // TODO: Set the number of constraints
+    size_t n_vars = 4*N + 2*(N-1);
     size_t n_constraints = (4+2)*N;
+
+
+
+
 
     // Initial value of the independent variables.
     // SHOULD BE 0 besides initial state.
@@ -161,6 +168,16 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     {
         vars[i] = 0;
     }
+
+
+    // Initial variables
+    vars[x_start] = state[0];
+    vars[y_start] = state[1];
+    vars[v_start] = state[2];
+    vars[psi_start] = state[3];
+    vars[cte_start] = state[4];
+    vars[epsi_start] = state[5];
+
 
     Dvector vars_lowerbound(n_vars);
     Dvector vars_upperbound(n_vars);

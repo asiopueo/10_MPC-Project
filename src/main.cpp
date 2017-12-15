@@ -102,7 +102,10 @@ int main()
         // The 4 signifies a websocket message
         // The 2 signifies a websocket event
         string sdata = string(data).substr(0, length);
-        cout << sdata << endl;
+        
+        // Uncomment for debugging purposes:
+        //cout << sdata << endl;
+        
         if (sdata.size() > 2 && sdata[0] == '4' && sdata[1] == '2') 
         {
             string s = hasData(sdata);
@@ -175,19 +178,28 @@ int main()
                     std::cout << std::endl;
                     */
 
-                    
-                    /*
-                    xvals = ;
-                    yvals = ;
-
+                    // Calculate cte and epsi here:
                     // Using the nearest points in the Car's coordinate system
-                    double cte = polyeval(coeffs, x) - y;
-                    double epsi = psi - atan(coeffs[1]);
+                    //double cte = -polyeval(coeffs, 0);
+                    double cte = -coeffs[0]; // polyeval unnecessary
+                    double epsi = -atan(coeffs[1]);
+                    cout << "cte: " << cte << "\t" << "epsi: " << epsi << endl;
 
-                    //mpc();
-                    //steer_value = ;
-                    //throttle_value = ;
-                    */
+                    // Calculation of predictive trajectory:
+                    Eigen::VectorXd state = Eigen::VectorXd(6);
+                    state << px, py, v, psi, cte, epsi;
+                    //std::vector<double> solution = mpc.Solve(state, coeffs);
+
+
+                    //steer_value = solution;
+                    //throttle_value = solution;
+
+                    vector<double> mpc_x_vals;
+                    vector<double> mpc_y_vals;
+
+                    //mpc_x_vals = ;
+                    //mpc_y_vals = ;
+
 
 
                     json msgJson;
@@ -200,13 +212,9 @@ int main()
                     //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
                     // the points in the simulator are connected by a Green line
 
-                    vector<double> mpc_x_vals;
-                    vector<double> mpc_y_vals;
 
-                    mpc_x_vals.push_back(5.0);
-                    mpc_y_vals.push_back(0.0);
-                    mpc_x_vals.push_back(15.0);
-                    mpc_y_vals.push_back(0.0);
+
+
 
                     msgJson["mpc_x"] = mpc_x_vals;
                     msgJson["mpc_y"] = mpc_y_vals;
