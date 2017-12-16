@@ -55,22 +55,22 @@ class FG_eval {
         // Cost based on reference state
         for (int t=0; t<N; ++t)
         {
-            fg[0] += CppAD::pow(vars[cte_start+t], 2);
-            fg[0] += CppAD::pow(vars[epsi_start+t], 2);
-            fg[0] += 0.5 * CppAD::pow(5-vars[v_start+t], 2); // Target velocity 25 mph
+            fg[0] += 50 * CppAD::pow(0.1-vars[cte_start+t], 4);
+            fg[0] += 10 * CppAD::pow(vars[epsi_start+t], 2);
+            fg[0] += 0.5 * CppAD::pow(15 - vars[v_start+t], 2); // Target velocity in m/s
         }
 
         // Minimize actuator use
         for (int t=0; t<N-1; ++t)
         {
-            fg[0] += 100 * CppAD::pow(vars[delta_start+t], 2);
+            fg[0] += 0.5 * CppAD::pow(vars[delta_start+t], 2);
             fg[0] += CppAD::pow(vars[a_start+t], 2);
         }
 
         // Minimize value gap for the actuators
         for (int t=0; t<N-2; ++t)
         {
-            fg[0] += 100 * CppAD::pow(vars[delta_start+t+1] - vars[delta_start+t], 2);
+            fg[0] += 0.1 * CppAD::pow(vars[delta_start+t+1] - vars[delta_start+t], 2);
             fg[0] += CppAD::pow(vars[a_start+t+1] - vars[a_start+t], 2);
         }
 
@@ -117,10 +117,10 @@ class FG_eval {
             fg[v_start+t+1] = v1 - (v0 + a0*dt);
             fg[psi_start + t + 1] = psi1 + (psi0 + v0 * delta0/Lf *dt);
             
-            AD<double> f0 = coeffs[0];// + coeffs[1] * x0;  // Change!!
+            AD<double> f0 = coeffs[1] + 2 * coeffs[2] * cte0 + 3 * coeffs[3] * CppAD::pow(cte0, 2); // Derivative of the 3rd order polynomial
             fg[cte_start+t+1] = cte1 - (f0 - y0 + (v0 * sin(epsi0)*dt) );
 
-            AD<double> psides0 = CppAD::atan(coeffs[1]); // Change!!
+            AD<double> psides0 = CppAD::atan(f0);
             fg[epsi_start+t+1] = epsi1 - (psi0 - psides0 + (v0 * delta0/Lf *dt));
         }
 

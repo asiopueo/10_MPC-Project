@@ -118,12 +118,11 @@ int main()
                     vector<double> ptsy = j[1]["ptsy"];
                     double px = j[1]["x"];
                     double py = j[1]["y"];
-                    double psi = j[1]["psi"];
-                    double v = j[1]["speed"];
+                    double psi = j[1]["psi"];   // units in rads
+                    double v = j[1]["speed"];   // unites in mph
 
                     // Conversion of speed from mph into m/s
                     v = v*0.44704; 
-
 
 
                     double steer_value; // Values in between [-1, 1]
@@ -166,7 +165,8 @@ int main()
                     Eigen::Map<Eigen::VectorXd> next_y_vals_Vector(&ptsy[0], 6);
 
                     // Calculate the coefficients of the fitted polynomial
-                    coeffs = polyfit(next_x_vals_Vector, next_y_vals_Vector, 3); // Fit values to pologon of order 3                    
+                    // Fit values to pologon of order 3 
+                    coeffs = polyfit(next_x_vals_Vector, next_y_vals_Vector, 3);                    
 
 
 
@@ -175,7 +175,7 @@ int main()
                     //double cte = -polyeval(coeffs, 0);
                     double cte = -coeffs[0]; // polyeval unnecessary
                     double epsi = -atan(coeffs[1]);
-                    cout << "cte: " << cte << "\t" << "epsi: " << epsi << endl;
+                    //cout << "cte: " << cte << "\t" << "epsi: " << epsi << endl;
 
                     // Calculation of predictive trajectory:
                     Eigen::VectorXd state = Eigen::VectorXd(6);
@@ -186,7 +186,7 @@ int main()
                     std::vector<double> solution = mpc.Solve(state, coeffs);
 
 
-                    steer_value = solution[0];
+                    steer_value = -solution[0];
                     throttle_value = solution[1];
 
                     //for (auto it : solution)
@@ -202,7 +202,7 @@ int main()
                     json msgJson;
                     // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
                     // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
-
+                    // Why the heck are input and output units different?!? :D
                     steer_value = steer_value / deg2rad(25);
                     cout << "steer_value=" << steer_value << "\t" << "throttle_value=" << throttle_value << endl;
 
