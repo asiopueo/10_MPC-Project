@@ -57,20 +57,20 @@ class FG_eval {
         {
             fg[0] += CppAD::pow(vars[cte_start+t], 2);
             fg[0] += CppAD::pow(vars[epsi_start+t], 2);
-            fg[0] += CppAD::pow(25-vars[v_start+t], 2); // Target velocity 25 mph
+            fg[0] += 0.5 * CppAD::pow(5-vars[v_start+t], 2); // Target velocity 25 mph
         }
 
         // Minimize actuator use
         for (int t=0; t<N-1; ++t)
         {
-            fg[0] += CppAD::pow(vars[delta_start+t], 2);
+            fg[0] += 100 * CppAD::pow(vars[delta_start+t], 2);
             fg[0] += CppAD::pow(vars[a_start+t], 2);
         }
 
         // Minimize value gap for the actuators
         for (int t=0; t<N-2; ++t)
         {
-            fg[0] += CppAD::pow(vars[delta_start+t+1] - vars[delta_start+t], 2);
+            fg[0] += 100 * CppAD::pow(vars[delta_start+t+1] - vars[delta_start+t], 2);
             fg[0] += CppAD::pow(vars[a_start+t+1] - vars[a_start+t], 2);
         }
 
@@ -115,12 +115,12 @@ class FG_eval {
             fg[x_start+t+1] = x1 - (x0 + v0 * cos(psi0) * dt);
             fg[y_start+t+1] = y1 - (y0 + v0 * sin(psi0) * dt);
             fg[v_start+t+1] = v1 - (v0 + a0*dt);
-            fg[psi_start + t + 1] = psi1 - x0 + (psi0 + v0 * delta0/Lf *dt);
+            fg[psi_start + t + 1] = psi1 + (psi0 + v0 * delta0/Lf *dt);
             
-            AD<double> f0 = coeffs[0];// + coeffs[1] * x0;
+            AD<double> f0 = coeffs[0];// + coeffs[1] * x0;  // Change!!
             fg[cte_start+t+1] = cte1 - (f0 - y0 + (v0 * sin(epsi0)*dt) );
 
-            AD<double> psides0 = CppAD::atan(coeffs[1]);
+            AD<double> psides0 = CppAD::atan(coeffs[1]); // Change!!
             fg[epsi_start+t+1] = epsi1 - (psi0 - psides0 + (v0 * delta0/Lf *dt));
         }
 
@@ -174,11 +174,18 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     Dvector vars_lowerbound(n_vars);
     Dvector vars_upperbound(n_vars);
     
-    // Set lower and upper limits for variables.
+
+    // ALL bounds have to be initialized!
+    for (int i=0; i<delta_start; ++i)
+    {
+        vars_lowerbound[i] = -10000.0;
+        vars_upperbound[i] = 10000.0;
+    }
+    // Set lower and upper limits for variables ([-25,+25] degrees in radians).
     for (int i=delta_start; i<a_start; ++i)
     {
-        vars_lowerbound[i] = -M_PI/4;
-        vars_upperbound[i] = M_PI/4;
+        vars_lowerbound[i] = -0.436332;
+        vars_upperbound[i] = 0.436332;
     }
     for (int i=a_start; i<a_start+N-1; ++i)
     {
@@ -192,11 +199,35 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     Dvector constraints_lowerbound(n_constraints);
     Dvector constraints_upperbound(n_constraints);
 
+
+
+    // Constraints for the transitions are 'rigid'
     for (int i = 0; i < n_constraints; ++i) 
     {
         constraints_lowerbound[i] = 0;
         constraints_upperbound[i] = 0;
     }
+
+    // Constraints for the first time step are set to the components of the current state.
+    // Although they were set to zero above, 
+    constraints_lowerbound[x_start] = state[0];
+    constraints_upperbound[x_start] = state[0];
+    
+    constraints_lowerbound[y_start] = state[1];
+    constraints_upperbound[y_start] = state[1];
+
+    constraints_lowerbound[v_start] = state[2];
+    constraints_upperbound[v_start] = state[2];
+
+    constraints_lowerbound[psi_start] = state[3];
+    constraints_upperbound[psi_start] = state[3];
+
+    constraints_lowerbound[cte_start] = state[4];
+    constraints_upperbound[cte_start] = state[4];
+    
+    constraints_lowerbound[epsi_start] = state[5];
+    constraints_upperbound[epsi_start] = state[5];
+    
 
     // object that computes objective and constraints
     FG_eval fg_eval(coeffs);

@@ -12,7 +12,7 @@ For build instructions, see *Basic Build Instructions* below.
 
 
 ## Timestep Length and Elapsed Duration
-The timestep length and elapsed dutaration
+The timestep length and elapsed duration
 
 
 ## Polynomial Fitting and MPC Preprocessing

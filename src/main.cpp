@@ -121,6 +121,10 @@ int main()
                     double psi = j[1]["psi"];
                     double v = j[1]["speed"];
 
+                    // Conversion of speed from mph into m/s
+                    v = v*0.44704; 
+
+
 
                     double steer_value; // Values in between [-1, 1]
                     double throttle_value; // Values in between [-1, 1]
@@ -132,7 +136,7 @@ int main()
                     rotation << cos(psi), sin(psi), 0,
                                 -sin(psi), cos(psi), 0,
                                 0, 0, 1;
-
+                                
                     Eigen::MatrixXd translation = Eigen::MatrixXd(3, 3);
                     translation << 1, 0, -px, 
                                    0, 1, -py,
@@ -170,12 +174,15 @@ int main()
                     // Using the nearest points in the Car's coordinate system
                     //double cte = -polyeval(coeffs, 0);
                     double cte = -coeffs[0]; // polyeval unnecessary
-                    double epsi = atan(coeffs[1]);
+                    double epsi = -atan(coeffs[1]);
                     cout << "cte: " << cte << "\t" << "epsi: " << epsi << endl;
 
                     // Calculation of predictive trajectory:
                     Eigen::VectorXd state = Eigen::VectorXd(6);
-                    state << px, py, v, psi, cte, epsi;
+
+                    // Pose ist zero since we have transformed everything into the car's coordinate system.
+                    // => Will be different if we incorporate a latency of 100ms and have to extraploate these values by means of the bicycle model.
+                    state << 0, 0, v, 0, cte, epsi;
                     std::vector<double> solution = mpc.Solve(state, coeffs);
 
 
@@ -195,8 +202,14 @@ int main()
                     json msgJson;
                     // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
                     // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
+
+                    steer_value = steer_value / deg2rad(25);
+                    cout << "steer_value=" << steer_value << "\t" << "throttle_value=" << throttle_value << endl;
+
                     msgJson["steering_angle"] = steer_value;
                     msgJson["throttle"] = throttle_value;
+
+
 
                     //Display the MPC predicted trajectory 
                     //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
