@@ -2,6 +2,34 @@
 Self-Driving Car Engineer Nanodegree Program
 
 ---
+## Submission
+This repository contains my code which I have submitted as part of the nanodegree term 2. In the following four sections I will answer questions relating my implementation.
+For build instructions, see *Basic Build Instructions* below.
+
+
+## The Model
+
+
+
+## Timestep Length and Elapsed Duration
+The timestep length and elapsed dutaration
+
+
+## Polynomial Fitting and MPC Preprocessing
+
+
+
+## Model Predictive Control and Latency
+Latency is incorporated into the controller by implementing the bicycle model which consists of the following equations:
+
+
+
+with delta_t being set to 0.1 seconds.
+
+
+
+
+
 
 ## Dependencies
 

@@ -74,9 +74,6 @@ Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals, int order)
     return result;
 }
 
-//
-//
-//
 
 
 
@@ -136,7 +133,6 @@ int main()
                                 -sin(psi), cos(psi), 0,
                                 0, 0, 1;
 
-                    //Eigen::VectorXd translation(2);
                     Eigen::MatrixXd translation = Eigen::MatrixXd(3, 3);
                     translation << 1, 0, -px, 
                                    0, 1, -py,
@@ -175,7 +171,7 @@ int main()
                     //double cte = -polyeval(coeffs, 0);
                     double cte = -coeffs[0]; // polyeval unnecessary
                     double epsi = atan(coeffs[1]);
-                    //cout << "cte: " << cte << "\t" << "epsi: " << epsi << endl;
+                    cout << "cte: " << cte << "\t" << "epsi: " << epsi << endl;
 
                     // Calculation of predictive trajectory:
                     Eigen::VectorXd state = Eigen::VectorXd(6);
