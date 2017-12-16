@@ -124,35 +124,31 @@ int main()
                     double psi = j[1]["psi"];
                     double v = j[1]["speed"];
 
-                    /*
-                    * TODO: Calculate steering angle and throttle using MPC.
-                    *
-                    * Both are in between [-1, 1].
-                    *
-                    */
 
-                    //std::cout << "ptsx: " << ptsx[0] << std::endl;
-                    //std::cout << "ptsy: " << ptsy[0] << std::endl;
-                    
-                    double steer_value;
-                    double throttle_value;
-                    //Eigen::VectorXd coeffs = Eigen::VectorXd(4);
+                    double steer_value; // Values in between [-1, 1]
+                    double throttle_value; // Values in between [-1, 1]
+
 
                     // Waypoints BEGIN
-                    // Transformation World->Car
-                    Eigen::MatrixXd rotation(2, 2);
-                    rotation << cos(psi), sin(psi),
-                                -sin(psi), cos(psi);
-                    Eigen::VectorXd translation(2);
-                    translation << -px, -py;
-                    Eigen::VectorXd input(2);
-                    Eigen::VectorXd output(2);
+                    // Coordinate transformation World->Car
+                    Eigen::MatrixXd rotation = Eigen::MatrixXd(3, 3);
+                    rotation << cos(psi), sin(psi), 0,
+                                -sin(psi), cos(psi), 0,
+                                0, 0, 1;
+
+                    //Eigen::VectorXd translation(2);
+                    Eigen::MatrixXd translation = Eigen::MatrixXd(3, 3);
+                    translation << 1, 0, -px, 
+                                   0, 1, -py,
+                                   0, 0, 1;
+
+                    Eigen::VectorXd input(3);
+                    Eigen::VectorXd output(3);
 
                     for (int i=0; i< ptsx.size(); ++i)
                     {
-                        input << ptsx[i], ptsy[i];
-                        output = rotation * (translation + input);
-                        //std::cout << output(0) << "\t" << output(1) << std::endl;
+                        input << ptsx[i], ptsy[i], 1;
+                        output = rotation * translation * input;
                         ptsx[i] = output(0);
                         ptsy[i] = output(1);
                     }
@@ -162,44 +158,42 @@ int main()
 
                     next_x_vals = ptsx;
                     next_y_vals = ptsy;
-                    //std::cout << next_x_vals[0] << "\t" << next_y_vals[0] << std::endl;
                     // Waypoints END
 
+
                     Eigen::VectorXd coeffs = Eigen::VectorXd(4);
-                    //Eigen::VectorXd next_x_vals_Vector = Eigen::VectorXd(6);
-                    //Eigen::VectorXd next_x_vals_Vector = Eigen::VectorXd(6);
                     Eigen::Map<Eigen::VectorXd> next_x_vals_Vector(&ptsx[0], 6);
                     Eigen::Map<Eigen::VectorXd> next_y_vals_Vector(&ptsy[0], 6);
 
+                    // Calculate the coefficients of the fitted polynomial
                     coeffs = polyfit(next_x_vals_Vector, next_y_vals_Vector, 3); // Fit values to pologon of order 3                    
 
-                    /*for (int i=0; i<4;i++)
-                        std::cout << coeffs[i] << "\t";
-                    std::cout << std::endl;
-                    */
+
 
                     // Calculate cte and epsi here:
                     // Using the nearest points in the Car's coordinate system
                     //double cte = -polyeval(coeffs, 0);
                     double cte = -coeffs[0]; // polyeval unnecessary
-                    double epsi = -atan(coeffs[1]);
-                    cout << "cte: " << cte << "\t" << "epsi: " << epsi << endl;
+                    double epsi = atan(coeffs[1]);
+                    //cout << "cte: " << cte << "\t" << "epsi: " << epsi << endl;
 
                     // Calculation of predictive trajectory:
                     Eigen::VectorXd state = Eigen::VectorXd(6);
                     state << px, py, v, psi, cte, epsi;
-                    mpc.Solve(state, coeffs);
+                    std::vector<double> solution = mpc.Solve(state, coeffs);
 
 
-                    //steer_value = solution;
-                    //throttle_value = solution;
+                    steer_value = solution[0];
+                    throttle_value = solution[1];
+
+                    //for (auto it : solution)
+                    //   cout << it << endl;
 
                     vector<double> mpc_x_vals;
                     vector<double> mpc_y_vals;
 
                     //mpc_x_vals = ;
                     //mpc_y_vals = ;
-
 
 
                     json msgJson;

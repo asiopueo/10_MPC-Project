@@ -7,7 +7,7 @@ using CppAD::AD;
 
 // TODO: Set the timestep length and duration
 size_t N = 20;
-double dt = 0.1;
+double dt = 0.5;
 
 
 const int x_start = 0;
@@ -57,7 +57,7 @@ class FG_eval {
         {
             fg[0] += CppAD::pow(vars[cte_start+t], 2);
             fg[0] += CppAD::pow(vars[epsi_start+t], 2);
-            fg[0] += CppAD::pow(vars[v_start+t], 2);
+            fg[0] += CppAD::pow(25-vars[v_start+t], 2); // Target velocity 25 mph
         }
 
         // Minimize actuator use
@@ -71,7 +71,7 @@ class FG_eval {
         for (int t=0; t<N-2; ++t)
         {
             fg[0] += CppAD::pow(vars[delta_start+t+1] - vars[delta_start+t], 2);
-            fg[0] += CppAD::pow(vars[a_start+t+1] - vars[a_start+1], 2);
+            fg[0] += CppAD::pow(vars[a_start+t+1] - vars[a_start+t], 2);
         }
 
 
@@ -112,12 +112,12 @@ class FG_eval {
 
 
 
-            fg[x_start+t+1] = x1 - (x0 + v0 * cos(psi0)*dt);
-            fg[y_start+t+1] = y1 - (y0 + v0 * sin(psi0)*dt);
+            fg[x_start+t+1] = x1 - (x0 + v0 * cos(psi0) * dt);
+            fg[y_start+t+1] = y1 - (y0 + v0 * sin(psi0) * dt);
             fg[v_start+t+1] = v1 - (v0 + a0*dt);
             fg[psi_start + t + 1] = psi1 - x0 + (psi0 + v0 * delta0/Lf *dt);
             
-            AD<double> f0 = coeffs[0] + coeffs[1] * x0;
+            AD<double> f0 = coeffs[0];// + coeffs[1] * x0;
             fg[cte_start+t+1] = cte1 - (f0 - y0 + (v0 * sin(epsi0)*dt) );
 
             AD<double> psides0 = CppAD::atan(coeffs[1]);
@@ -152,8 +152,6 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
 
 
 
-
-
     // Initial value of the independent variables.
     // SHOULD BE 0 besides initial state.
     Dvector vars(n_vars);
@@ -177,10 +175,15 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     Dvector vars_upperbound(n_vars);
     
     // Set lower and upper limits for variables.
-    for (int i=0; i<n_vars; ++i)
+    for (int i=delta_start; i<a_start; ++i)
     {
-        vars_lowerbound[i] = -0.5;
-        vars_upperbound[i] = 0.5;
+        vars_lowerbound[i] = -M_PI/4;
+        vars_upperbound[i] = M_PI/4;
+    }
+    for (int i=a_start; i<a_start+N-1; ++i)
+    {
+        vars_lowerbound[i] = 0;
+        vars_upperbound[i] = 1;
     }
 
 
@@ -236,9 +239,11 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     //
     // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
     // creates a 2 element double vector.
-    
-    //std::cout << "delta: " << solution.x[delta_start] << std::endl;
-    //std::cout << "a: " << solution.x[a_start] << std::endl;
 
-    return {};
+    //std::vector<double> tee(&solution.x[0], &solution.x[psi_start]);
+    //return tee;
+
+    std::cout << solution.x[delta_start] << "\t" << solution.x[a_start] << std::endl;
+    return {solution.x[delta_start], solution.x[a_start]};
+
 }
