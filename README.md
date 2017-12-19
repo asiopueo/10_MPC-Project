@@ -3,22 +3,37 @@ Self-Driving Car Engineer Nanodegree Program
 
 ---
 ## Submission
-This repository contains my code which I have submitted as part of the nanodegree term 2. In the following four sections I will answer questions relating my implementation.
+This repository contains the code which I have submitted as part of the self-driving car nanodegree in term 2. In the following four sections I will answer questions relating my implementation.
 For build instructions, see *Basic Build Instructions* below.
 
 
 ## The Model
+In order to incorporate the latency of the system, i.e. the time interval between the moment the signal is set by the ECU (Electronic Controller Unit) and the moment the actuators have arrived at their intended position, we have implemented the bicycle model.
+
+Let ![](./images/var_latency.png) is the latency (which is set by default to 100ms) and ![](./images/func_f.png) is the distance function to the middle line of the road (which in our implementation was approximated by a polynomial of order 3). If t is the instance when the MPC calculations are made, and assuming that the calculation is completed instantly, the state at the moment when the actuators have arrived at their final position is given by:
+
+![](./images/model.png)
+
+Of course, this is also only an approximation. The ECU needs some time to process the calculations.  Also, we assume that the actuators stay in state ![](./images/var_actuators_t.png) for ![](./images/var_latency.png) and immediately set to ![](./images/var_actuators_t+1.png).  However, these are still reasonable approximations.
 
 
-![Image](./iamges/model.gif)
+
+
 
 ## Timestep Length and Elapsed Duration
-The timestep length `dt` and the number of timesteps `N` have been chosen to relate to
-Let T=dt*N be the total duration of the path prediction.
+The timestep length `dt` and the number of timesteps `N` have been chosen to be adapted.
+
+Let `T=dt*N` be the total duration of the path prediction.
+
+Other considerations are the restrictions of embedded systems.  Embedded ECUs will never have the power of fairly modern desktop machines for a variety of reasons (power consumption, costs, durability).
 
 
 ## Polynomial Fitting and MPC Preprocessing
-Preprocessing is done by transforming the waypoints (which are contained in a deque) from the world coordinate system to the vehicle's coordinate system. The waypoints in the vehicle's system are then fitted to a polynomial of order 3.
+Preprocessing is done by transforming the waypoints (which are contained in a deque) from the world coordinate system to the vehicle's coordinate system.
+
+
+
+The waypoints in the vehicle's system are then fitted to a polynomial of order 3.
 
 
 ## Model Predictive Control and Latency
