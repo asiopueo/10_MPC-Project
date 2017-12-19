@@ -17,6 +17,11 @@ constexpr double pi() { return M_PI; }
 double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
+// Time interval to compensate for latency
+const double latency = 0.1;
+
+
+
 // Checks if the SocketIO event has JSON data.
 // If there is data the JSON object in string format will be returned,
 // else the empty string "" will be returned.
@@ -125,7 +130,7 @@ int main()
                     v = v*0.44704; 
 
 
-                    double steer_value; // Values in between [-1, 1]
+                    double steer_value = 0; // Values in between [-1, 1]
                     double throttle_value; // Values in between [-1, 1]
 
 
@@ -175,28 +180,66 @@ int main()
                     //double cte = -polyeval(coeffs, 0);
                     double cte = -coeffs[0]; // polyeval unnecessary
                     double epsi = -atan(coeffs[1]);
-                    //cout << "cte: " << cte << "\t" << "epsi: " << epsi << endl;
+                    cout << "cte: " << cte << "\t" << "epsi: " << epsi << endl;
 
                     // Calculation of predictive trajectory:
-                    Eigen::VectorXd state = Eigen::VectorXd(6);
+                    Eigen::VectorXd state_current = Eigen::VectorXd(6); // current state (Vehicle coordinate system)
+                    Eigen::VectorXd state_future = Eigen::VectorXd(6); // state prediction in 100ms (Vehicle coordinate system)
 
                     // Pose ist zero since we have transformed everything into the car's coordinate system.
                     // => Will be different if we incorporate a latency of 100ms and have to extraploate these values by means of the bicycle model.
-                    state << 0, 0, v, 0, cte, epsi;
-                    std::vector<double> solution = mpc.Solve(state, coeffs);
+                    /*                
+                    state_current << 0, 0, v, 0, cte, epsi;
+                    std::vector<double> solution = mpc.Solve(state_current, coeffs);                    
+                    */
+
+                    /* 
+                        Predict state in 100ms using the bicycle model equations below.
+                                           
+                        x1 = x0 + v0 * cos(psi0) * dt;
+                        y1 = y0 + v0 * sin(psi0) * dt;
+                        v1 = v0 + a0 * dt;
+                        psi1 = psi0 + v0/Lf * delta * dt;
+                        cte1 = f(x0) - y0 + (v0 * sin(epsi0) * dt);  // Error!
+                        epsi1 = epsi0 + v0/Lf * delta0
+                        
+                        f(y) is the fitted polynomial.
+                        Since x0, y0, psi0 are all equal to zero, these equations simplify to the ones given below.
+                        Notice that we have also assumed the acceleration a to be zero.
+                    */
+
+                    
+                    double delta0;
+                    double x1, y1, v1, psi1, cte1, epsi1;
+                    
+                    
+                    delta0 = steer_value;
+                    x1 = v * latency;
+                    y1 = 0;
+                    v1 = v;// + a0 * latency;
+                    psi1 = v/Lf * delta0 * latency;
+                    cte1 = coeffs[0];
+                    epsi1 = v/Lf * delta0;
+
+                    state_future << x1, y1, v1, psi1, cte1, epsi1;
+                    std::vector<double> solution = mpc.Solve(state_future, coeffs);
+                    
 
 
                     steer_value = -solution[0];
                     throttle_value = solution[1];
 
-                    //for (auto it : solution)
-                    //   cout << it << endl;
-
+                    // Predicted points
                     vector<double> mpc_x_vals;
                     vector<double> mpc_y_vals;
 
-                    //mpc_x_vals = ;
-                    //mpc_y_vals = ;
+                    // Not really beautiful, but well...
+                    for (int i=0; i<solution.size()/2-1; ++i)
+                    {
+                        mpc_x_vals.push_back(solution[2*i]);
+                        mpc_y_vals.push_back(solution[2*i+1]);
+                    }
+
 
 
                     json msgJson;
@@ -233,7 +276,7 @@ int main()
                     auto msg = "42[\"steer\"," + msgJson.dump() + "]";
                     
 
-                    // View JSON-payload
+                    // Uncomment to view JSON-payload
                     //std::cout << msg << std::endl;
                     
 

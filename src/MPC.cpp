@@ -20,17 +20,8 @@ const int delta_start = 6*N;
 const int a_start = 6*N + (N-1);
 
 
-// This value assumes the model presented in the classroom is used.
-//
-// It was obtained by measuring the radius formed by running the vehicle in the
-// simulator around in a circle with a constant steering angle and velocity on a
-// flat terrain.
-//
-// Lf was tuned until the the radius formed by the simulating the model
-// presented in the classroom matched the previous radius.
-//
-// This is the length from front to CoG that has a similar radius.
-const double Lf = 2.67;
+// We have moved the definition of Lf into the header, as we need it in BOTH main.cpp and MPC.cpp
+
 
 class FG_eval {
     public:
@@ -55,23 +46,23 @@ class FG_eval {
         // Cost based on reference state
         for (int t=0; t<N; ++t)
         {
-            fg[0] += 50 * CppAD::pow(0.1-vars[cte_start+t], 4);
+            fg[0] += 0.5 * CppAD::pow(vars[cte_start+t], 2);
             fg[0] += 10 * CppAD::pow(vars[epsi_start+t], 2);
-            fg[0] += 0.5 * CppAD::pow(15 - vars[v_start+t], 2); // Target velocity in m/s
+            fg[0] += 0.5 * CppAD::pow(5 - vars[v_start+t], 2); // Target velocity in m/s
         }
-
+        
         // Minimize actuator use
         for (int t=0; t<N-1; ++t)
         {
-            fg[0] += 0.5 * CppAD::pow(vars[delta_start+t], 2);
+            fg[0] += 5 * CppAD::pow(vars[delta_start+t], 2);
             fg[0] += CppAD::pow(vars[a_start+t], 2);
         }
-
+        
         // Minimize value gap for the actuators
         for (int t=0; t<N-2; ++t)
         {
-            fg[0] += 0.1 * CppAD::pow(vars[delta_start+t+1] - vars[delta_start+t], 2);
-            fg[0] += CppAD::pow(vars[a_start+t+1] - vars[a_start+t], 2);
+            fg[0] += 10 * CppAD::pow(vars[delta_start+t+1] - vars[delta_start+t], 2);
+            fg[0] += 0.5 * CppAD::pow(vars[a_start+t+1] - vars[a_start+t], 2);
         }
 
 
@@ -115,16 +106,16 @@ class FG_eval {
             fg[x_start+t+1] = x1 - (x0 + v0 * cos(psi0) * dt);
             fg[y_start+t+1] = y1 - (y0 + v0 * sin(psi0) * dt);
             fg[v_start+t+1] = v1 - (v0 + a0*dt);
-            fg[psi_start + t + 1] = psi1 + (psi0 + v0 * delta0/Lf *dt);
+            fg[psi_start + t + 1] = psi1 - (psi0 + v0 * delta0/Lf *dt);
             
-            AD<double> f0 = coeffs[1] + 2 * coeffs[2] * cte0 + 3 * coeffs[3] * CppAD::pow(cte0, 2); // Derivative of the 3rd order polynomial
+            AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * CppAD::pow(x0, 2) + coeffs[3] * CppAD::pow(x0, 3); 
             fg[cte_start+t+1] = cte1 - (f0 - y0 + (v0 * sin(epsi0)*dt) );
 
-            AD<double> psides0 = CppAD::atan(f0);
+            // Derivative of the 3rd order polynomial
+            AD<double> f0_derived = coeffs[1] + 2 * coeffs[2] * x0 + 3 * coeffs[3] * CppAD::pow(x0, 2);
+            AD<double> psides0 = CppAD::atan(f0_derived);
             fg[epsi_start+t+1] = epsi1 - (psi0 - psides0 + (v0 * delta0/Lf *dt));
         }
-
-
 
     }
 };
@@ -148,7 +139,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     // 4 * 10 + 2 * 9
 
     size_t n_vars = 6*N + 2*(N-1);
-    size_t n_constraints = N*7;
+    size_t n_constraints = N*6;
 
 
 
@@ -270,11 +261,26 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     //
     // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
     // creates a 2 element double vector.
+    //return {solution.x[delta_start], solution.x[a_start]};
 
-    //std::vector<double> tee(&solution.x[0], &solution.x[psi_start]);
-    //return tee;
+
+
+    std::vector<double> result;
+    result.push_back(solution.x[delta_start]);
+    result.push_back(solution.x[a_start]);
+
+    // I would have preferred using the member 'insert', but can't think of an elegant way tp communicate the 
+    // number of interations, N, elegantally.
+
+    for (int t=0; t<N; ++t) { 
+        result.push_back(solution.x[x_start + t]);
+        result.push_back(solution.x[y_start + t]);
+    }
+    
+
+    return result;
 
     //std::cout << solution.x[delta_start] << "\t" << solution.x[a_start] << std::endl;
-    return {solution.x[delta_start], solution.x[a_start]};
+    
 
 }

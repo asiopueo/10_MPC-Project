@@ -10,21 +10,23 @@ For build instructions, see *Basic Build Instructions* below.
 ## The Model
 
 
+![Image](./iamges/model.gif)
 
 ## Timestep Length and Elapsed Duration
-The timestep length and elapsed duration
+The timestep length `dt` and the number of timesteps `N` have been chosen to relate to
+Let T=dt*N be the total duration of the path prediction.
 
 
 ## Polynomial Fitting and MPC Preprocessing
-
+Preprocessing is done by transforming the waypoints (which are contained in a deque) from the world coordinate system to the vehicle's coordinate system. The waypoints in the vehicle's system are then fitted to a polynomial of order 3.
 
 
 ## Model Predictive Control and Latency
 Latency is incorporated into the controller by implementing the bicycle model which consists of the following equations:
 
 
-
 with delta_t being set to 0.1 seconds.
+In other words: At time t=0.0s, with (a_0, \delta_0) being the actuators. The state of the vehicle is predicted for the time t=0.1s. This predicted state is used as input for the optimizer, so that the command for the actuators settings to (a_1, \delta_1) can be given immediately.
 
 
 
