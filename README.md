@@ -21,13 +21,22 @@ The set of states is given by ![](./images/set_state.png), the set of actuator i
 
 
 ## Timestep Length and Elapsed Duration
-The timestep length `dt` and the number of timesteps `N` have been chosen to be adapted.
+The timestep length `dt` and the number of timesteps `N` have been chosen to satisfy two requirements:
 
-Let `T=dt*N` be the total duration of the path prediction.
+1. The predicted path shall cover the whole maneuver.  In the present setting, the controller shall mitigate road departure and align the vehicle to the center of the road.
 
-The predicted distance is then equal to ![](./images/predicted_distance.png).
+2. The time of computation of the optimal trajectory shall be reduced as much as possible in order to reduce latency.
 
-Other considerations are the restrictions of embedded systems.  Embedded ECUs will never have the power of fairly modern desktop machines for a variety of reasons (power consumption, costs, durability).
+The first requirement sets both lower and upper bounds to the elapsed duration `N*dt`. For example, the screenshot below illustrates the typical situation where the vehicle has left the center of the road.
+
+![](./images/N_dt.png)
+
+The red horizontal line illustrates where a cut-off of the planned trajectory could be made.  Approximately the last third of this trajectory (indicated by the red horizontal line) follows the center line and is therefore well behind the reasonable horizon. If there was any traffic, the situation could change within a few seconds completely and path planning would already be useless at these distant points.
+
+The latter requirement poses an even greater challenge for embedded systems. ECUs will never have the power of fairly modern desktop machines for a variety of reasons (power consumption, costs, durability).
+
+Notice that the length of the predicted path varies with the speed of the vehicle as the predicted distance can be approximated by the sum ![](./images/predicted_distance.png).
+
 
 
 ## Polynomial Fitting and MPC Preprocessing

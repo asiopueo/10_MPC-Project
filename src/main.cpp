@@ -216,7 +216,7 @@ int main()
                     delta0 = steer_value;
                     x1 = v * latency;
                     y1 = 0;
-                    v1 = v;// + a0 * latency;
+                    v1 = v;// neglected the term a*latency in order to approximate further
                     psi1 = v/Lf * delta0 * latency;
                     cte1 = coeffs[0];
                     epsi1 = v/Lf * delta0;
