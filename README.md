@@ -33,7 +33,7 @@ The first requirement sets both lower and upper bounds to the elapsed duration `
 
 The red horizontal line illustrates where a cut-off of the planned trajectory could be made.  Approximately the last third of this trajectory (indicated by the red horizontal line) follows the center line and is therefore well behind the reasonable horizon. If there was any traffic, the situation could change within a few seconds completely and path planning would already be useless at these distant points.
 
-The latter requirement poses an even greater challenge for embedded systems. ECUs will never have the power of fairly modern desktop machines for a variety of reasons (power consumption, costs, durability).
+The latter requirement poses an even greater challenge for embedded systems. ECUs (Electronic Controller Units) will never have the power of fairly modern desktop machines for a variety of reasons (power consumption, costs, durability).
 
 Notice that the length of the predicted path varies with the speed of the vehicle as the predicted distance can be approximated by the sum ![](./images/predicted_distance.png).
 
@@ -56,7 +56,7 @@ The waypoints in the vehicle's system are then fitted to a polynomial of order 3
 
 
 ## Model Predictive Control and Latency
-Latency, i.e. the time interval between the moment the signal is set by the ECU (Electronic Controller Unit) and the moment the actuators have arrived at their intended position, is incorporated into the controller by altering the initial state of the optimizer from the current measured state to a predicted state.
+Latency, i.e. the time interval between the moment the signal is set by the ECU and the moment the actuators have arrived at their intended position, is incorporated into the controller by altering the initial state of the optimizer from the current measured state to a predicted state.
 
 Let ![](./images/var_latency.png) be the latency (which is set by default to 100ms),  ![](./images/var_actuators_0.png) the current actuator positions, and ![](./images/var_pre_state.png) the current measured state.  The state of the vehicle at the time when the actuators will have reached their new position ![](./images/var_actuators_1.png), is therefore given by
 
