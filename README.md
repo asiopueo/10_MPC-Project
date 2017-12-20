@@ -37,7 +37,7 @@ The red horizontal line illustrates where a cut-off of the planned trajectory co
 
 The latter requirement poses an even greater challenge for embedded systems. ECUs (Electronic Controller Units) will never have the power of fairly modern desktop machines for a variety of reasons (power consumption, costs, durability).
 
-Notice that the length of the predicted path varies with the speed of the vehicle as the predicted distance can be approximated by the sum ![](./images/predicted_distance.png).
+Notice that the length of the predicted path varies with the speed of the vehicle as the predicted distance can be approximated by the sum ![](./images/predicted_distance.png).  I.e., the faster the car is, the greater the length of the predicted path.
 
 
 
