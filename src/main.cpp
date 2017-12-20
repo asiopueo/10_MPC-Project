@@ -201,7 +201,7 @@ int main()
                         v1 = v0 + a0 * dt;
                         psi1 = psi0 + v0/Lf * delta * dt;
                         cte1 = f(x0) - y0 + (v0 * sin(epsi0) * dt);  // Error!
-                        epsi1 = epsi0 + v0/Lf * delta0
+                        epsi1 = epsi0 + v0/Lf * delta0 * dt
                         
                         f(y) is the fitted polynomial.
                         Since x0, y0, psi0 are all equal to zero, these equations simplify to the ones given below.
@@ -213,12 +213,12 @@ int main()
                     double x1, y1, v1, psi1, cte1, epsi1;
                     
                     
-                    delta0 = steer_value;
+                    delta0 = -steer_value;
                     x1 = v * latency;
                     y1 = 0;
                     v1 = v;// neglected the term a*latency in order to approximate further
                     psi1 = v/Lf * delta0 * latency;
-                    cte1 = coeffs[0];
+                    cte1 = coeffs[0] + v * sin(epsi) * latency;
                     epsi1 = epsi + v/Lf * delta0 * latency;
 
                     state_future << x1, y1, v1, psi1, cte1, epsi1;

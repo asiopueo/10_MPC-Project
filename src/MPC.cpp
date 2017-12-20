@@ -6,7 +6,7 @@
 using CppAD::AD;
 
 // TODO: Set the timestep length and duration
-size_t N = 60;
+size_t N = 10;
 double dt = 0.1;
 
 
@@ -180,7 +180,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     }
     for (int i=a_start; i<a_start+N-1; ++i)
     {
-        vars_lowerbound[i] = 0;
+        vars_lowerbound[i] = -1;
         vars_upperbound[i] = 1;
     }
 
