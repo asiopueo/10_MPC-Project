@@ -18,7 +18,7 @@ double deg2rad(double x) { return x * pi() / 180; }
 double rad2deg(double x) { return x * 180 / pi(); }
 
 // Time interval to compensate for latency
-const double latency = 0.1;
+const double latency = 0.2;
 
 
 
@@ -178,7 +178,7 @@ int main()
                     // Calculate cte and epsi here:
                     // Using the nearest points in the Car's coordinate system
                     //double cte = -polyeval(coeffs, 0);
-                    double cte = -coeffs[0]; // polyeval unnecessary
+                    double cte = coeffs[0]; // polyeval unnecessary
                     double epsi = -atan(coeffs[1]);
                     cout << "cte: " << cte << "\t" << "epsi: " << epsi << endl;
 
@@ -219,7 +219,7 @@ int main()
                     v1 = v;// neglected the term a*latency in order to approximate further
                     psi1 = v/Lf * delta0 * latency;
                     cte1 = coeffs[0];
-                    epsi1 = v/Lf * delta0;
+                    epsi1 = epsi + v/Lf * delta0 * latency;
 
                     state_future << x1, y1, v1, psi1, cte1, epsi1;
                     std::vector<double> solution = mpc.Solve(state_future, coeffs);

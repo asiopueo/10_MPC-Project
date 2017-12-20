@@ -21,11 +21,13 @@ The set of states is given by ![](./images/set_state.png), the set of actuator i
 
 
 ## Timestep Length and Elapsed Duration
-The timestep length `dt` and the number of timesteps `N` have been chosen to satisfy two requirements:
+The time step length `dt` and the number of time steps `N` have been chosen to satisfy two requirements:
 
 1. The predicted path shall cover the whole maneuver.  In the present setting, the controller shall mitigate road departure and align the vehicle to the center of the road.
 
 2. The time of computation of the optimal trajectory shall be reduced as much as possible in order to reduce latency.
+
+3. The time step length `dt` shall be short enough such that the spatial resolution of the predicted path is fine enough for a stable trajectory.
 
 The first requirement sets both lower and upper bounds to the elapsed duration `N*dt`. For example, the screenshot below illustrates the typical situation where the vehicle has left the center of the road.
 
